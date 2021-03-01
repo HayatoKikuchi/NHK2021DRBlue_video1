@@ -40,7 +40,7 @@ class DRwall{
 public:
     DRwall(byte pinSW, byte pinSupport, int MDadress, RoboClaw *_roboclaw);
 
-    void wall_time_count(); //壁越えに関する時間を計算
+    void wall_time_count(double int_time); //壁越えに関する時間を計算
     void roboclawSpeedM1(double vel); //足回りの速度指定
     bool send_wall_position(double refAngle); //壁越え機構の動作確認に使用
     bool send_wall_cmd(double refAngle,double robot_x_vel); //壁越えのコマンドを送信

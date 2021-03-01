@@ -23,8 +23,8 @@ DRwall::DRwall(byte pinSW, byte pinSupport, int MDadress, RoboClaw *_roboclaw) :
 /****自己位置推定の関数****/
 void DRBlue::calcu_robotPosition(){
   
-  encX_rad = (double)enc2->getCount() * _2PI_RES4;
-  encY_rad = (double)enc1->getCount() * _2PI_RES4;
+  encX_rad = (double)enc1->getCount() * _2PI_RES4;
+  encY_rad = (double)enc2->getCount() * _2PI_RES4;
   position.z = (double)lpms->get_z_angle();
 
   encX = RADIUS_X * encX_rad;
@@ -134,14 +134,14 @@ int convert_ppss(double accel, double resolution, double gearration){
   return (int)(accel / (2.0*PI_) * resolution * gearration);
 }
 
-void DRwall::wall_time_count(){
-  if(wall_start) wall_time += 0.01;
+void DRwall::wall_time_count(double int_time){
+  if(wall_start) wall_time += int_time;
   else wall_time = 0.0;
 }
 
 bool DRwall::send_wall_cmd(double refAngle,double robot_x_vel){
   static bool phase_1 = false;
-  static bool send_cmd = false;
+  //static bool send_cmd = false;
   double seconds; //壁越えに必要な時間[s]
   if(sw.button_fall()) phase_1 = true;
   if(phase_1){
@@ -160,10 +160,12 @@ bool DRwall::send_wall_cmd(double refAngle,double robot_x_vel){
       if((target_seconds - wall_time) < 0.01){
         digitalWrite(pinSpt,HIGH);
         wall_start = false;
+        phase_1 = false;
       }  
     }
   }
-  return send_cmd;
+  //return send_cmd;
+  return true;
 }
 
 bool DRwall::send_wall_position(double refAngle){
