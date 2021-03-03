@@ -64,29 +64,29 @@ int wall_mode; // 壁越え機構に関する変数
 void dipSetup(){  
   if(dipsw_state & DIP1){
     expand = 2; // 2段階目をコントローラから指示する
-    digitalWrite(PIN_LED_1,HIGH);
+    //digitalWrite(PIN_LED_1,HIGH);
   }  
   else{
-    digitalWrite(PIN_LED_1,LOW);
+    //digitalWrite(PIN_LED_1,LOW);
     expand = 1; // 2段階目をリミットスイッチで判断
   } 
 
   if(dipsw_state & DIP2){
     robot_velocity_mode = 1; //X方向にのみ進む
-    digitalWrite(PIN_LED_2,HIGH);
+    //digitalWrite(PIN_LED_2,HIGH);
   }
   else{
     robot_velocity_mode = 2; //全方向移動
-    digitalWrite(PIN_LED_2,LOW);
+    //digitalWrite(PIN_LED_2,LOW);
   }
 
   if(dipsw_state & DIP3){
     wall_mode = 1; //テストモード
-    digitalWrite(PIN_LED_3,HIGH);
+    //digitalWrite(PIN_LED_3,HIGH);
   }
   else{
     wall_mode = 2; //通常モード
-    digitalWrite(PIN_LED_3,LOW);
+    //digitalWrite(PIN_LED_3,LOW);
   }
 }
 
@@ -165,10 +165,10 @@ void timer_warikomi(){
   //DR.calcu_robotPosition();
   DR.calcu_roboAngle(); // calcu_robotPosition関数を使用する場合は不要
 
-  wall_1.wall_time_count(); // 壁越えの時間に関する処理
-  wall_2.wall_time_count(); // ↓
-  wall_3.wall_time_count(); // ↓
-  wall_4.wall_time_count(); // ↓
+  wall_1.wall_time_count(INT_TIME); // 壁越えの時間に関する処理
+  wall_2.wall_time_count(INT_TIME); // ↓
+  wall_3.wall_time_count(INT_TIME); // ↓
+  wall_4.wall_time_count(INT_TIME); // ↓
 
   encorder_count = enc.getEncCount(); //エンコーダのカウント値を更新
   dipsw_state = dipsw.getDipState(); // ディップスイッチの状態を更新
@@ -185,6 +185,7 @@ void timer_warikomi(){
 void setup(){
 
   Serial.begin(115200);
+  SERIAL_LEONARDO.begin(115200);
   SERIAL_LCD.begin(115200);
 
   DR.DRsetup();      //　汎用基板などの様々なセットアップを行う
@@ -221,14 +222,16 @@ void loop(){
   Con.update(PIN_LED_USER); //コントローラの状態を更新
   dipSetup(); // ディップスイッチでの設定
 
+  if(SERIAL_LEONARDO.available()){
+    uint8_t led_num;
+    led_num = SERIAL_LEONARDO.read();
+    digitalWrite(PIN_LED_1, led_num & 0x01);
+    digitalWrite(PIN_LED_2, led_num & 0x02);
+    digitalWrite(PIN_LED_3, led_num & 0x04);
+    digitalWrite(PIN_LED_4, led_num & 0x08);
+  }
+
   if( flag_10ms ){
-    Serial.print(posiZ_pid.Kp);
-    Serial.print("\t");
-    Serial.print(posiZ_pid.Ki);
-    Serial.print("\t");
-    Serial.print(posiZ_pid.Kd);
-    Serial.print("\t");
-    Serial.println(enc.enc_count);
     
   radianPID_setup(); // pidのゲインを設定
     //展開右
