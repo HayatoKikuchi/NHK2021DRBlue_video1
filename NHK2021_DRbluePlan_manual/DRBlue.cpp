@@ -168,9 +168,9 @@ bool DRwall::send_wall_cmd(double refAngle,double robot_x_vel){
   return true;
 }
 
-bool DRwall::send_wall_position(double refAngle){
+bool DRwall::send_wall_position(double refAngle, double seconds){
   position = convert_position(refAngle,RES_WALL,GEARRATIO_WALL);
-  omega = convert_pps(refAngle / 0.5,RES_WALL,GEARRATIO_WALL);
+  omega = convert_pps(refAngle / seconds,RES_WALL,GEARRATIO_WALL);
   accel = convert_ppss(KAKUKASOKUDO_WALL,RES_WALL,GEARRATIO_WALL);
   roboclaw->SpeedAccelDeccelPositionM2(adress,accel,omega,accel,position,true);
   return true;
