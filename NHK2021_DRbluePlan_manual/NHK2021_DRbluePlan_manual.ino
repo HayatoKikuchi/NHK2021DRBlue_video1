@@ -317,9 +317,14 @@ void loop(){
     double robot_x_vel; //ロボットのx方向の移動速度
     robot_x_vel = 0.5;
     static double wall_rad = 0.0; //壁越え機構の回転角
+    static double pre_wall_rad = 0.0;
+    static double wall_seconds = 0.0;
     if(Con.readButton(BUTTON_LEFT) == PUSHED) wall_rad = 0.0;
     if(Con.readButton(BUTTON_UP) == PUSHED) wall_rad = 90.0;
     if(Con.readButton(BUTTON_RIGHT) == PUSHED) wall_rad = 180.0;
+
+    if(fabs(pre_wall_rad - wall_rad) == 180.0) wall_seconds = 1.0;
+    else wall_seconds = 0.5;
     
     switch (wall_mode)
     {
@@ -338,10 +343,10 @@ void loop(){
         roboclaw.SpeedAccelDeccelPositionM2(wall_4.adress,wall_4.accel,wall_4.omega,wall_4.accel,wall_4.position,true);
       }
     */
-      wall_1.send_wall_position(wall_rad);
-      wall_2.send_wall_position(wall_rad);
-      wall_3.send_wall_position(wall_rad);
-      wall_4.send_wall_position(wall_rad);
+      wall_1.send_wall_position(wall_rad, wall_seconds);
+      wall_2.send_wall_position(wall_rad, wall_seconds);
+      wall_3.send_wall_position(wall_rad, wall_seconds);
+      wall_4.send_wall_position(wall_rad, wall_seconds);
       break;
     
     case 2:
