@@ -57,36 +57,46 @@ bool expand_left = true;  // ↓
 bool expand_pahse_right = false; // タモの展開
 bool expand_pahse_left = false;  // ↓
 
-int expand; // 展開方法に関する変数
+int expand_mode; // 展開方法に関する変数
 int robot_velocity_mode; //足回りの走行仕様について
 int wall_mode; // 壁越え機構に関する変数
+int turning_mode; //ロボットの旋回モード
 
 void dipSetup(){  
   if(dipsw_state & DIP1){
-    expand = 2; // 2段階目をコントローラから指示する
-    //digitalWrite(PIN_LED_1,HIGH);
+    expand_mode = 2; // 2段階目をコントローラから指示する
+    digitalWrite(PIN_LED_1,HIGH);
   }  
   else{
-    //digitalWrite(PIN_LED_1,LOW);
-    expand = 1; // 2段階目をリミットスイッチで判断
+    digitalWrite(PIN_LED_1,LOW);
+    expand_mode = 1; // 2段階目をリミットスイッチで判断
   } 
 
   if(dipsw_state & DIP2){
     robot_velocity_mode = 1; //X方向にのみ進む
-    //digitalWrite(PIN_LED_2,HIGH);
+    digitalWrite(PIN_LED_2,HIGH);
   }
   else{
     robot_velocity_mode = 2; //全方向移動
-    //digitalWrite(PIN_LED_2,LOW);
+    digitalWrite(PIN_LED_2,LOW);
   }
 
   if(dipsw_state & DIP3){
     wall_mode = 1; //テストモード
-    //digitalWrite(PIN_LED_3,HIGH);
+    digitalWrite(PIN_LED_3,HIGH);
   }
   else{
     wall_mode = 2; //通常モード
-    //digitalWrite(PIN_LED_3,LOW);
+    digitalWrite(PIN_LED_3,LOW);
+  }
+
+  if(dipsw_state & DIP4){
+    turning_mode = 1; // 角度PID無し
+    digitalWrite(PIN_LED_4,HIGH);
+  }
+  else{
+    turning_mode = 2; // 角度PID有
+    digitalWrite(PIN_LED_4,LOW);
   }
 }
 
@@ -185,7 +195,7 @@ void timer_warikomi(){
 void setup(){
 
   Serial.begin(115200);
-  SERIAL_LEONARDO.begin(115200);
+  //SERIAL_LEONARDO.begin(115200);
   SERIAL_LCD.begin(115200);
 
   DR.DRsetup();      //　汎用基板などの様々なセットアップを行う
@@ -221,7 +231,8 @@ void loop(){
 
   Con.update(PIN_LED_USER); //コントローラの状態を更新
   dipSetup(); // ディップスイッチでの設定
-
+  radianPID_setup(); // pidのゲインを設定
+/*
   if(SERIAL_LEONARDO.available()){
     uint8_t led_num;
     led_num = SERIAL_LEONARDO.read();
@@ -230,10 +241,9 @@ void loop(){
     digitalWrite(PIN_LED_3, led_num & 0x04);
     digitalWrite(PIN_LED_4, led_num & 0x08);
   }
-
+*/
   if( flag_10ms ){
     
-  radianPID_setup(); // pidのゲインを設定
     //展開右
     if(expand_right){
       if(Con.readButton(BUTTON_R1) == PUSHED && !expand_pahse_right){
@@ -241,7 +251,7 @@ void loop(){
         expand_pahse_right = true;
       }
       if(expand_pahse_right){
-        switch (expand)
+        switch (expand_mode)
         {
         case 1:
           if(!digitalRead(PIN_SW_EXPAND_RIGHT)){
@@ -272,7 +282,7 @@ void loop(){
         expand_pahse_left = true;
       }
       if(expand_pahse_left){
-        switch (expand)
+        switch (expand_mode)
         {
         case 1:
           if(!digitalRead(PIN_SW_EXPAMD_LEFT)){
@@ -304,6 +314,7 @@ void loop(){
     Cx = 0.5, Cy = 0.5, Cz = 1.0;
     coords gloabalVel = ManualCon.getGlobalVel(Con.LJoyX,Con.LJoyY,Con.RJoyY);
     coords localVel = ManualCon.getLocalVel(Cx*gloabalVel.x, Cy*gloabalVel.y, Cz*gloabalVel.z, DR.roboAngle);
+    if(turning_mode == 1) localVel.z = gloabalVel.z; // 角度PIDをするかしないか
     coords refV = ManualCon.getVel_max(localVel.x, localVel.y, localVel.z);
     coords_4 VelCmd = ManualCon.getCmd(refV.x,refV.y,refV.z);
   /*
