@@ -207,17 +207,24 @@ void setup(){
 
   lcd.clear_display();
   lcd.color_red();
-  lcd.write_str("robot waiting....",LINE_2,1);
+  lcd.write_str("waiting....",LINE_2,1);
   
   //ボードのスイッチが押されるまで待機
   bool ready_to_start = false;
   while(!ready_to_start){
-    Con.update(PIN_LED_1);
-    if(!digitalRead(PIN_SW)){
+    Con.update(PIN_LED_USER);
+    if(Con.getButtonState() & BUTTON_MARU){
       DR.LEDblink(PIN_LED_BLUE, 2, 100);
       lcd.clear_display();
       lcd.color_blue();
       lcd.clear_display();
+
+      roboclaw.ResetEncoders(ADR_MD_WHEE_1);
+      roboclaw.ResetEncoders(ADR_MD_WHEE_2);
+      roboclaw.ResetEncoders(ADR_MD_WHEE_3);
+      roboclaw.ResetEncoders(ADR_MD_WHEE_4);
+
+      lcd.write_str("  HELLOW WORLD   ",LINE_2,1);
       delay(1000);
       ready_to_start = true;
     }
@@ -231,7 +238,7 @@ void loop(){
 
   Con.update(PIN_LED_USER); //コントローラの状態を更新
   dipSetup(); // ディップスイッチでの設定
-  radianPID_setup(); // pidのゲインを設定
+  if(turning_mode == 2 ) radianPID_setup(); // pidのゲインを設定
 /*
   if(SERIAL_LEONARDO.available()){
     uint8_t led_num;
@@ -242,6 +249,26 @@ void loop(){
     digitalWrite(PIN_LED_4, led_num & 0x08);
   }
 */
+  //展開前の状態に戻す
+  if(Con.readButton(BUTTON_PAD) == PUSHED){
+    expand_right = true;
+    expand_pahse_right = false;
+    expand_left = true;
+    expand_pahse_left = false;
+
+    roboclaw.ResetEncoders(ADR_MD_WHEE_1);
+    roboclaw.ResetEncoders(ADR_MD_WHEE_2);
+    roboclaw.ResetEncoders(ADR_MD_WHEE_3);
+    roboclaw.ResetEncoders(ADR_MD_WHEE_4);
+  }
+
+  if(Con.readButton(BUTTON_OPTION) == PUSHED){  
+    roboclaw.ResetEncoders(ADR_MD_WHEE_1);
+    roboclaw.ResetEncoders(ADR_MD_WHEE_2);
+    roboclaw.ResetEncoders(ADR_MD_WHEE_3);
+    roboclaw.ResetEncoders(ADR_MD_WHEE_4);
+  }
+  
   if( flag_10ms ){
     
     //展開右
@@ -300,14 +327,6 @@ void loop(){
           break;
         }
       }
-    }
-    
-    //展開前の状態に戻す
-    if(Con.readButton(BUTTON_PAD) == PUSHED){
-      expand_right = true;
-      expand_pahse_right = false;
-      expand_left = true;
-      expand_pahse_left = false;
     }
   
     double Cx,Cy,Cz; //速度の倍数
