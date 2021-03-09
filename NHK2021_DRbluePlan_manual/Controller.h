@@ -21,10 +21,12 @@
     #define BUTTON_L2 0x40
     #define BUTTON_R2 0x80
 
-    #define BUTTON_PAD 0x100
-    #define BUTTON_PS 0x200
-    #define BUTTON_SHARE 0x400
-    #define BUTTON_OPTION 0x800
+    #define BUTTON_PAD 0x0100
+    #define BUTTON_PS 0x0200
+    // #define BUTTON_SHARE 0x400
+    // #define BUTTON_OPTION 0x800
+    #define BUTTON_L3 0x0400
+    #define BUTTON_R3 0x0800
 
     #define BUTTON_UP 0x1000
     #define BUTTON_RIGHT 0x2000
