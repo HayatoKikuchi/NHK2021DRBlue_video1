@@ -15,9 +15,9 @@ PID pid_posiZ(0.0,0.0,0.0,INT_TIME);
 
 ManualControl::ManualControl(PID *_pid){
   pid = _pid;
-  velX_filter.setLowPassPara(0.25, 0.0);//Tと初期値を設定
-  velY_filter.setLowPassPara(0.25, 0.0);//Tと初期値を設定
-  velZ_filter.setLowPassPara(0.25, 0.0);//Tと初期値を設定
+  velX_filter.setLowPassPara(0.05, 0.0);//Tと初期値を設定
+  velY_filter.setLowPassPara(0.05, 0.0);//Tと初期値を設定
+  velZ_filter.setLowPassPara(0.05, 0.0);//Tと初期値を設定
 }
 
 coords ManualControl::getGlobalVel(unsigned int JoyX, unsigned int JoyY, unsigned int JoyZ){
