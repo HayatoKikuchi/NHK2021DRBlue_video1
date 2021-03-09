@@ -73,6 +73,7 @@ void dipSetup(){
   } 
 
   if(dipsw_state & DIP2){
+    
     robot_velocity_mode = 1; //X方向にのみ進む
     digitalWrite(PIN_LED_2,HIGH);
   }
@@ -93,15 +94,16 @@ void dipSetup(){
   if(dipsw_state & DIP4){
     turning_mode = 1; // 角度PID無し
     digitalWrite(PIN_LED_4,HIGH);
+    digitalWrite(PIN_LED_ENC,LOW);
   }
   else{
     turning_mode = 2; // 角度PID有
     digitalWrite(PIN_LED_4,LOW);
+    digitalWrite(PIN_LED_ENC,HIGH);
   }
 }
 
 void radianPID_setup(){
-  digitalWrite(PIN_LED_ENC,HIGH);
   static int pid_setting_mode = 1;
   static double Kp = 0.0, Ki = 0.0, Kd = 0.0;
   static bool init_kp = true, init_ki = true, init_kd = true;
@@ -195,7 +197,7 @@ void timer_warikomi(){
 void setup(){
 
   Serial.begin(115200);
-  //SERIAL_LEONARDO.begin(115200);
+  //SERIAL_LEONARDO.begin(9600);
   SERIAL_LCD.begin(115200);
 
   DR.DRsetup();      //　汎用基板などの様々なセットアップを行う
@@ -203,7 +205,8 @@ void setup(){
   DR.allOutputLow(); //  出力をLOWにする
 
   roboclaw.begin(115200);
-  Con.begin_api(115200); //XBeeとの通信を開始する
+  Con.begin(115200); //XBeeとの通信を開始する
+  //Con.begin_api(115200); // apiでの通信
 
   lcd.clear_display();
   lcd.color_red();
@@ -213,8 +216,9 @@ void setup(){
   bool ready_to_start = false;
   while(!ready_to_start){
     Con.update(PIN_LED_USER);
-    if(Con.getButtonState() & BUTTON_MARU){
+    if(Con.getButtonState() & BUTTON_MARU || !digitalRead(PIN_SW)){
       DR.LEDblink(PIN_LED_BLUE, 2, 100);
+      DR.LEDblink(PIN_LED_USER,2,100);
       lcd.clear_display();
       lcd.color_blue();
       lcd.clear_display();
@@ -236,17 +240,21 @@ void setup(){
 
 void loop(){
 
-  Con.update(PIN_LED_USER); //コントローラの状態を更新
+  //Con.update(PIN_LED_USER); //コントローラの状態を更新
   dipSetup(); // ディップスイッチでの設定
   if(turning_mode == 2 ) radianPID_setup(); // pidのゲインを設定
 /*
-  if(SERIAL_LEONARDO.available()){
-    uint8_t led_num;
-    led_num = SERIAL_LEONARDO.read();
-    digitalWrite(PIN_LED_1, led_num & 0x01);
-    digitalWrite(PIN_LED_2, led_num & 0x02);
-    digitalWrite(PIN_LED_3, led_num & 0x04);
-    digitalWrite(PIN_LED_4, led_num & 0x08);
+  uint8_t led_num = 0;
+  while(SERIAL_LEONARDO.available()){
+    char recv =  SERIAL_LEONARDO.read();
+    if(recv != '\n'){
+      led_num = (uint8_t)recv;
+      digitalWrite(PIN_LED_1, led_num & 0x01);
+      digitalWrite(PIN_LED_2, led_num & 0x02);
+      digitalWrite(PIN_LED_3, led_num & 0x04);
+      digitalWrite(PIN_LED_4, led_num & 0x08);
+      Serial.println(led_num);
+    }
   }
 */
   //展開前の状態に戻す
