@@ -61,6 +61,7 @@ void DRBlue::BasicSetup(){
   pinMode(PIN_LED_2, OUTPUT);
   pinMode(PIN_LED_3, OUTPUT);
   pinMode(PIN_LED_4, OUTPUT);
+  pinMode(PIN_LED_USER, OUTPUT);
 
   LEDblink(PIN_LED_GREEN, 2, 100);
   //LPMS-ME1の初期化
