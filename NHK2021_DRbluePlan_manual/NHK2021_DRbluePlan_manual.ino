@@ -205,7 +205,7 @@ void setup(){
   DR.allOutputLow(); //  出力をLOWにする
 
   roboclaw.begin(115200);
-  Con.begin(115200); //XBeeとの通信を開始する
+  SERIAL_XBEE.begin(115200);
   //Con.begin_api(115200); // apiでの通信
 
   lcd.clear_display();
@@ -218,7 +218,6 @@ void setup(){
     Con.update(PIN_LED_USER);
     if(Con.getButtonState() & BUTTON_MARU || !digitalRead(PIN_SW)){
       DR.LEDblink(PIN_LED_BLUE, 2, 100);
-      DR.LEDblink(PIN_LED_USER,2,100);
       lcd.clear_display();
       lcd.color_blue();
       lcd.clear_display();
@@ -240,7 +239,7 @@ void setup(){
 
 void loop(){
 
-  //Con.update(PIN_LED_USER); //コントローラの状態を更新
+  Con.update(PIN_LED_USER); //コントローラの状態を更新
   dipSetup(); // ディップスイッチでの設定
   if(turning_mode == 2 ) radianPID_setup(); // pidのゲインを設定
 /*
@@ -270,7 +269,7 @@ void loop(){
     roboclaw.ResetEncoders(ADR_MD_WHEE_4);
   }
 
-  if(Con.readButton(BUTTON_OPTION) == PUSHED){  
+  if(Con.readButton(BUTTON_PAD) == PUSHED){  
     roboclaw.ResetEncoders(ADR_MD_WHEE_1);
     roboclaw.ResetEncoders(ADR_MD_WHEE_2);
     roboclaw.ResetEncoders(ADR_MD_WHEE_3);
@@ -414,6 +413,14 @@ void loop(){
     default:
       break;
     }
+
+    Serial.print(Con.getButtonState());
+    Serial.print("\t");
+    Serial.print(gloabalVel.x);
+    Serial.print("\t");
+    Serial.print(gloabalVel.y);
+    Serial.print("\t");
+    Serial.println(gloabalVel.z);
     flag_10ms = false;
   }
 }
