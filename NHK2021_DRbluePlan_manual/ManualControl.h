@@ -12,7 +12,7 @@
 
 #define JOY_DEADBAND    ( 5 )
 #define JOY_MAXVEL      ( 1.0 )
-#define JOY_MAXANGVEL   ( PI_ )
+#define JOY_MAXANGVEL   ( PI_ / 2.0 )
 
 class ManualControl{
 public:
