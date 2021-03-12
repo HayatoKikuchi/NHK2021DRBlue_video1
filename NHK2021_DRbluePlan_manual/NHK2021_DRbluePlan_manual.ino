@@ -31,6 +31,9 @@ DRwall wall_2(PIN_SW_WALL_2,PIN_SUPPORT_WHEEL_2,ADR_MD_WHEE_2,&roboclaw); //　�
 DRwall wall_3(PIN_SW_WALL_3,PIN_SUPPORT_WHEEL_3,ADR_MD_WHEE_3,&roboclaw); //　↓
 DRwall wall_4(PIN_SW_WALL_4,PIN_SUPPORT_WHEEL_4,ADR_MD_WHEE_4,&roboclaw); //　↓
 
+DRexpand expand_right(PIN_SW_EXPAND_RIGHT,PIN_SUPPORT_RIGHT); // 展開機構
+DRexpand expand_left(PIN_SW_EXPAMD_LEFT,PIN_SUPPORT_LEFT);    // ↓
+
 Encorder enc; // 基板上のエンコーダ
 int encorder_count; //エンコーダのカウント値を格納
 DipSW dipsw; // 基板上のディップスイッチ
@@ -52,10 +55,6 @@ bool button_LEFT = false;
 
 /****変数****/
 bool flag_10ms  = false;
-bool expand_right = true; // 展開の処理を行うかを指定する
-bool expand_left = true;  // ↓
-bool expand_pahse_right = false; // タモの展開
-bool expand_pahse_left = false;  // ↓
 
 int expand_mode; // 展開方法に関する変数
 int robot_velocity_mode; //足回りの走行仕様について
@@ -107,11 +106,13 @@ void radianPID_setup(){
   static int pid_setting_mode = 1;
   static double Kp = 0.0, Ki = 0.0, Kd = 0.0;
   static bool init_kp = true, init_ki = true, init_kd = true;
+  static bool flag_lcd = true;
+
   if(button_UP)   pid_setting_mode++;
   else if(button_DOWN) pid_setting_mode--;
   if(pid_setting_mode == 0) pid_setting_mode = 3;
   else if(pid_setting_mode == 4) pid_setting_mode = 1;
-  static bool flag_lcd = true;
+  
   if(flag_lcd){
     lcd.write_str("RadianPID Setting",LINE_1,1);
     flag_lcd = false;
@@ -216,16 +217,18 @@ void setup(){
   bool ready_to_start = false;
   while(!ready_to_start){
     Con.update(PIN_LED_USER);
+    //roboclawの原点出し
+    if(Con.readButton(BUTTON_PS) == PUSHED){  
+      roboclaw.ResetEncoders(ADR_MD_WHEE_1);
+      roboclaw.ResetEncoders(ADR_MD_WHEE_2);
+      roboclaw.ResetEncoders(ADR_MD_WHEE_3);
+      roboclaw.ResetEncoders(ADR_MD_WHEE_4);
+    }
     if(Con.getButtonState() & BUTTON_MARU || !digitalRead(PIN_SW)){
       DR.LEDblink(PIN_LED_BLUE, 2, 100);
       lcd.clear_display();
       lcd.color_blue();
       lcd.clear_display();
-
-      roboclaw.ResetEncoders(ADR_MD_WHEE_1);
-      roboclaw.ResetEncoders(ADR_MD_WHEE_2);
-      roboclaw.ResetEncoders(ADR_MD_WHEE_3);
-      roboclaw.ResetEncoders(ADR_MD_WHEE_4);
 
       lcd.write_str("  HELLOW WORLD   ",LINE_2,1);
       delay(1000);
@@ -256,20 +259,15 @@ void loop(){
     }
   }
 */
+
   //展開前の状態に戻す
   if(Con.readButton(BUTTON_PAD) == PUSHED){
-    expand_right = true;
-    expand_pahse_right = false;
-    expand_left = true;
-    expand_pahse_left = false;
-
-    roboclaw.ResetEncoders(ADR_MD_WHEE_1);
-    roboclaw.ResetEncoders(ADR_MD_WHEE_2);
-    roboclaw.ResetEncoders(ADR_MD_WHEE_3);
-    roboclaw.ResetEncoders(ADR_MD_WHEE_4);
+    expand_right.init();
+    expand_left.init();
   }
 
-  if(Con.readButton(BUTTON_PAD) == PUSHED){  
+  //roboclawの原点出し
+  if(Con.readButton(BUTTON_PS) == PUSHED){  
     roboclaw.ResetEncoders(ADR_MD_WHEE_1);
     roboclaw.ResetEncoders(ADR_MD_WHEE_2);
     roboclaw.ResetEncoders(ADR_MD_WHEE_3);
@@ -277,64 +275,9 @@ void loop(){
   }
   
   if( flag_10ms ){
-    
-    //展開右
-    if(expand_right){
-      if(Con.readButton(BUTTON_R1) == PUSHED && !expand_pahse_right){
-        digitalWrite(PIN_SUPPORT_RIGHT,HIGH);
-        expand_pahse_right = true;
-      }
-      if(expand_pahse_right){
-        switch (expand_mode)
-        {
-        case 1:
-          if(!digitalRead(PIN_SW_EXPAND_RIGHT)){
-            digitalWrite(PIN_EXPAND_RIGHT,HIGH);
-            expand_right = false;
-          }
-          break;
-        
-        case 2:
-         if(Con.readButton(BUTTON_R1) == PUSHED){
-            digitalWrite(PIN_EXPAND_RIGHT,HIGH);
-            expand_right = false;
-          }
-        default:
-          break;
-        }
-      }
-      if(Con.readButton(BUTTON_R1) == PUSHED){
-        digitalWrite(PIN_EXPAND_RIGHT,HIGH);
-        expand_right = false;
-      }
-    }
-    
-    //展開左
-    if(expand_left){
-      if(Con.readButton(BUTTON_L1) == PUSHED && !expand_pahse_left){
-        digitalWrite(PIN_SUPPORT_LEFT,HIGH);
-        expand_pahse_left = true;
-      }
-      if(expand_pahse_left){
-        switch (expand_mode)
-        {
-        case 1:
-          if(!digitalRead(PIN_SW_EXPAMD_LEFT)){
-            digitalWrite(PIN_EXPAND_LEFT,HIGH);
-            expand_left = false;
-          }
-          break;
-        
-        case 2:
-          if(Con.readButton(BUTTON_L1) == PUSHED){
-            digitalWrite(PIN_EXPAND_LEFT,HIGH);
-            expand_left = false;
-          }
-        default:
-          break;
-        }
-      }
-    }
+
+    expand_right.expand_func(Con.readButton(BUTTON_R1),expand_mode);
+    expand_left.expand_func(Con.readButton(BUTTON_L1),expand_mode);
   
     double Cx,Cy,Cz; //速度の倍数
     Cx = 0.5, Cy = 0.5, Cz = 1.0;
@@ -414,13 +357,6 @@ void loop(){
       break;
     }
 
-    Serial.print(Con.getButtonState());
-    Serial.print("\t");
-    Serial.print(gloabalVel.x);
-    Serial.print("\t");
-    Serial.print(gloabalVel.y);
-    Serial.print("\t");
-    Serial.println(gloabalVel.z);
     flag_10ms = false;
   }
 }
