@@ -12,6 +12,13 @@ DRBlue::DRBlue(lpms_me1 *_lpms, phaseCounter *_enc1, phaseCounter *_enc2)
   position.y = 0.0;
 }
 
+DRexpand::DRexpand(byte _sw_pinName, byte _mosfet)
+{
+  sw_pinName = _sw_pinName;
+  mosfet = _mosfet;
+  DRexpand::init();
+}
+
 DRwall::DRwall(byte pinSW, byte pinSupport, int MDadress, RoboClaw *_roboclaw) : sw(pinSW){
   adress = MDadress;
   pinSpt = pinSupport;
@@ -121,6 +128,45 @@ void DRBlue::allOutputLow(){
   digitalWrite(PIN_SUPPORT_WHEEL_2,LOW);
   digitalWrite(PIN_SUPPORT_WHEEL_3,LOW);
   digitalWrite(PIN_SUPPORT_WHEEL_4,LOW);
+}
+
+void DRexpand::expand_func(int ConButton, int mode)
+{
+  if(expand.flag_pahse1){
+    if(ConButton == _PUSHED && !expand.flag_pahse2){
+      digitalWrite(mosfet,HIGH);
+      expand.flag_pahse2 = true;
+    }
+    if(expand.flag_pahse2){
+      switch (mode)
+      {
+      case 1:
+        if(!digitalRead(sw_pinName)){
+          digitalWrite(mosfet,HIGH);
+          expand.flag_pahse1 = false;
+        }
+        break;
+      
+      case 2:
+        if(ConButton == _PUSHED){
+          digitalWrite(mosfet,HIGH);
+          expand.flag_pahse1 = false;
+        }
+      default:
+        break;
+      }
+    }
+    if(ConButton == _PUSHED){
+      digitalWrite(mosfet,HIGH);
+      expand.flag_pahse1 = false;
+    }
+  }
+}
+
+void DRexpand::init(void)
+{
+  expand.flag_pahse1 = true;
+  expand.flag_pahse2 = false;
 }
 
 int convert_position(double radian,double resorution, double gearration){
