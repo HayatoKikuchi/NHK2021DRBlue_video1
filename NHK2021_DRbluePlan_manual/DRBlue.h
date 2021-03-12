@@ -9,6 +9,14 @@
 #include "phaseCounterPeach.h"
 #include "RoboClaw.h"
 
+#define _PUSHED     1
+#define _RELEASED   2
+
+struct expand_value{
+  bool flag_pahse1;
+  bool flag_pahse2;
+};
+
 class DRBlue{
 public:
     /*********** 変数宣言 ***********/
@@ -34,6 +42,17 @@ private:
     double encY_rad , encY , pre_encY;
     double x_axis_prime, y_axis_prime;
     double angle_rad;
+};
+
+class DRexpand{
+public:
+    DRexpand(byte _sw_pinName, byte _mosfet);
+    void expand_func(int ConButton, int mode); //展開機構を操作する
+    void init(void);
+    expand_value expand;
+private:
+    byte sw_pinName;
+    byte mosfet;
 };
 
 class DRwall{
