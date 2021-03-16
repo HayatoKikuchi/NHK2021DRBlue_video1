@@ -23,6 +23,7 @@ DRwall::DRwall(byte pinSW, byte pinSupport, int MDadress, RoboClaw *_roboclaw) :
   adress = MDadress;
   pinSpt = pinSupport;
   roboclaw = _roboclaw;
+  phase_1 = false;
   pinMode(pinSpt,OUTPUT);
   digitalWrite(pinSpt,HIGH);
 }
@@ -169,16 +170,20 @@ void DRexpand::init(void)
   expand.flag_pahse2 = false;
 }
 
-int convert_position(double radian,double resorution, double gearration){
-  return (int)((radian * resorution)/(2.0*PI_) * gearration);
+int convert_position(double degree,double resorution, double gearration){
+  double radian;
+  radian = degree / 360.0 * 2.0 * PI_;
+  return (int)((radian * 4.0*resorution)/(2.0*PI_) * gearration);
 }
 
-int convert_pps(double omega, double resolution,double gearration){
-  return (int)(omega / (2.0*PI_) * resolution * gearration);
+int convert_pps(double omega_deg, double resolution,double gearration){
+  double omega_rad;
+  omega_rad = omega_deg / 360.0 * 2.0 * PI_;
+  return (int)(omega_rad / (2.0*PI_) * 4.0*resolution * gearration);
 }
 
 int convert_ppss(double accel, double resolution, double gearration){
-  return (int)(accel / (2.0*PI_) * resolution * gearration);
+  return (int)(accel / (2.0*PI_) * 4.0*resolution); // gearration);
 }
 
 void DRwall::wall_time_count(double int_time){
@@ -187,21 +192,17 @@ void DRwall::wall_time_count(double int_time){
 }
 
 bool DRwall::send_wall_cmd(double refAngle,double robot_x_vel){
-  static bool phase_1 = false;
-  //static bool send_cmd = false;
-  double seconds; //壁越えに必要な時間[s]
-  if(sw.button_fall()) phase_1 = true;
+  if(sw.get_button_state() != 1) phase_1 = true;
   if(phase_1){
     wall_start = true;
     digitalWrite(pinSpt,LOW);
-    // seconds = DISTANCE_WALL / robot_vel_x;
     seconds = DISTANCE_WALL / robot_x_vel;
     position = convert_position(refAngle,RES_WALL,GEARRATIO_WALL);
     omega = convert_pps(refAngle / seconds,RES_WALL,GEARRATIO_WALL);
     accel = convert_ppss(KAKUKASOKUDO_WALL,RES_WALL,GEARRATIO_WALL);
-    if(wall_time > 0.5){
+    accel = 70000.0;
+    if(true){//(wall_time > 0.5){
       roboclaw->SpeedAccelDeccelPositionM2(adress,accel,omega,accel,position,true);
-      //send_cmd = true;
       double target_seconds;
       target_seconds = position / omega;
       if((target_seconds - wall_time) < 0.01){
@@ -211,18 +212,29 @@ bool DRwall::send_wall_cmd(double refAngle,double robot_x_vel){
       }  
     }
   }
-  //return send_cmd;
   return true;
 }
 
-bool DRwall::send_wall_position(double refAngle, double seconds){
+bool DRwall::send_wall_position(double refAngle,double refOmega){
   position = convert_position(refAngle,RES_WALL,GEARRATIO_WALL);
-  omega = convert_pps(refAngle / seconds,RES_WALL,GEARRATIO_WALL);
+  omega = convert_pps(refOmega,RES_WALL,GEARRATIO_WALL);
   accel = convert_ppss(KAKUKASOKUDO_WALL,RES_WALL,GEARRATIO_WALL);
+  accel = 70000.0;
   roboclaw->SpeedAccelDeccelPositionM2(adress,accel,omega,accel,position,true);
   return true;
 }
 
+void DRwall::init()
+{
+  send_wall_cmd(0.0,180.0);
+}
+
 void DRwall::roboclawSpeedM1(double vel){
   roboclaw->SpeedM1(adress,(int)vel);
+}
+void DRwall::roboclaw_begin(int baudlate){
+  roboclaw->begin(baudlate);
+}
+void DRwall::roboclawResetEncoders(){
+  roboclaw->ResetEncoders(adress);
 }
