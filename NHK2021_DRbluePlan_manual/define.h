@@ -57,9 +57,10 @@ struct coords_4{
 #define PIN_SW_EXPAND_RIGHT 68
 #define PIN_SW_EXPAMD_LEFT 67
 
-#define SERIAL_LPC1768  Serial0
+//#define SERIAL_LPC1768  Serial0
 #define SERIAL_LPMSME1  Serial1
-#define SERIAL_ROBOCLAW Serial4
+#define SERIAL_ROBOCLAW_L Serial4 //wheel1 and wheel2
+#define SERIAL_ROBOCLAW_R Serial0 //wheel3 and wheel4
 #define SERIAL_LEONARDO Serial5
 #define SERIAL_LCD      Serial6
 #define SERIAL_XBEE     Serial7
@@ -144,10 +145,10 @@ struct coords_4{
 #endif
 
 // RoboClaw関連
-#define ADR_MD_WHEE_1   ( 128 )
-#define ADR_MD_WHEE_2   ( 129 )
-#define ADR_MD_WHEE_3   ( 130 )
-#define ADR_MD_WHEE_4   ( 131 )
+#define ADR_MD_WHEE_1   ( 131 )
+#define ADR_MD_WHEE_2   ( 128 )
+#define ADR_MD_WHEE_3   ( 129 )
+#define ADR_MD_WHEE_4   ( 130 )
 
 //const double _2PI_MEASRMX = 2.0 * PI / MEASURE_RES_MUL_X;
 //const double _2PI_MEASRMY = 2.0 * PI / MEASURE_RES_MUL_Y;
