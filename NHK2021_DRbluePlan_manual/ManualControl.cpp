@@ -70,12 +70,13 @@ coords ManualControl::getGlobalVel(unsigned int JoyX, unsigned int JoyY, unsigne
 coords ManualControl::getLocalVel(double vel_x, double vel_y, double vel_z, double roboAngle){
   coords refVel;
   static double refAngle = 0.0;
-  refAngle = roboAngle;
 
   refAngle += vel_z*0.01;
   refVel.x = +vel_x*cos(roboAngle) + vel_y*sin(roboAngle);
   refVel.y = -vel_x*sin(roboAngle) + vel_y*cos(roboAngle);
   refVel.z = pid->getCmd(refAngle,roboAngle,MAXOMEGA);
+  
+  refAngle = roboAngle;
 
   return refVel;
 }
