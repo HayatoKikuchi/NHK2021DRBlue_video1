@@ -25,13 +25,15 @@ public:
     ManualControl(PID *_pid);
     
     coords getGlobalVel(unsigned int JoyX, unsigned int JoyY, unsigned int JoyZ);
-    coords getLocalVel(double refVx, double refVy, double refVz, double roboAngle);
+    coords getLocalVel(double refVx, double refVy, double refVz, double roboAngle,bool mode);
     coords getVel_max(double vel_x, double vel_y, double vel_z);
     coords_4 getCmd(double refVx, double refVy, double refVz);
+    double calcu_posiPID(double conZ, double roboAngle); // タイマー割込みで使用
 
     double robot_vel_x;
     double robot_vel_y;
     double robot_vel;
+    double posiZ_cmd;
 
 private:
     PID *pid;

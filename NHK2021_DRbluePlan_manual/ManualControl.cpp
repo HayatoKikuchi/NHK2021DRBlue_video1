@@ -15,6 +15,7 @@ PID pid_posiZ(0.0,0.0,0.0,INT_TIME);
 
 ManualControl::ManualControl(PID *_pid){
   pid = _pid;
+  posiZ_cmd = 0.0;
   velX_filter.setLowPassPara(0.05, 0.0);//Tと初期値を設定
   velY_filter.setLowPassPara(0.05, 0.0);//Tと初期値を設定
   velZ_filter.setLowPassPara(0.05, 0.0);//Tと初期値を設定
@@ -67,16 +68,21 @@ coords ManualControl::getGlobalVel(unsigned int JoyX, unsigned int JoyY, unsigne
   return refV;
 }
 
-coords ManualControl::getLocalVel(double vel_x, double vel_y, double vel_z, double roboAngle){
-  coords refVel;
+double ManualControl::calcu_posiPID(double conZ, double roboAngle)
+{
   static double refAngle = 0.0;
+  refAngle += conZ * 0.01;
+  posiZ_cmd = pid->getCmd(refAngle,roboAngle,MAXOMEGA);
+  refAngle = roboAngle;
+  return refAngle;
+}
 
-  refAngle += vel_z*0.01;
+coords ManualControl::getLocalVel(double vel_x, double vel_y, double vel_z, double roboAngle,bool mode){
+  coords refVel;
   refVel.x = +vel_x*cos(roboAngle) + vel_y*sin(roboAngle);
   refVel.y = -vel_x*sin(roboAngle) + vel_y*cos(roboAngle);
-  refVel.z = pid->getCmd(refAngle,roboAngle,MAXOMEGA);
-  
-  refAngle = roboAngle;
+  if(mode) refVel.z = posiZ_cmd;
+  else refVel.z = vel_z;
 
   return refVel;
 }
