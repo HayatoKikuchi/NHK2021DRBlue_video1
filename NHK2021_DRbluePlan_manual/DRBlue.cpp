@@ -192,13 +192,13 @@ void DRwall::wall_time_count(double int_time){
 }
 
 bool DRwall::send_wall_cmd(double refAngle,double robot_x_vel){
-  if(sw.get_button_state() != 1) phase_1 = true;
+  if(sw.get_button_state() == 1) phase_1 = true;
   if(phase_1){
     wall_start = true;
     digitalWrite(pinSpt,LOW);
-    seconds = DISTANCE_WALL / robot_x_vel;
+    seconds = DISTANCE_WALL / robot_x_vel; // 90度回転するために必要な時間
     position = convert_position(refAngle,RES_WALL,GEARRATIO_WALL);
-    omega = convert_pps(refAngle / seconds,RES_WALL,GEARRATIO_WALL);
+    omega = convert_pps((refAngle/2.0) / seconds,RES_WALL,GEARRATIO_WALL);
     accel = convert_ppss(KAKUKASOKUDO_WALL,RES_WALL,GEARRATIO_WALL);
     accel = 70000.0;
     if(true){//(wall_time > 0.5){
