@@ -62,6 +62,7 @@ public:
     int8_t readButton(unsigned int button);
 
     unsigned int getButtonState() const;
+    unsigned int getpreButtonState() const;
 
     /**
      * ジョイスティックの値を読む

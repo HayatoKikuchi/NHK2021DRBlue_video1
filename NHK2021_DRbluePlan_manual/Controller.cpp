@@ -167,6 +167,10 @@ unsigned int Controller::getButtonState() const
 {
     return ButtonState;
 }
+unsigned int Controller::getpreButtonState() const
+{
+    return preButtonState;
+}
 
 /**コントローラの入力に変化があったらtrueを返す**/
 bool Controller::getButtonChanged() const
