@@ -54,8 +54,8 @@ struct coords_4{
 #define PIN_SW_WALL_2 3
 #define PIN_SW_WALL_3 4
 #define PIN_SW_WALL_4 5
-#define PIN_SW_EXPAND_RIGHT 68
-#define PIN_SW_EXPAMD_LEFT 67
+#define PIN_SW_EXPAND_RIGHT 3
+#define PIN_SW_EXPAMD_LEFT 2
 
 //#define SERIAL_LPC1768  Serial0
 #define SERIAL_LPMSME1  Serial1
