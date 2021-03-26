@@ -29,68 +29,69 @@ void Controller::begin_api(int baudrate){
 
 void Controller::update(byte PinName)
 {
-    unsigned int checksum;
-    //uint8_t tmp;
-    char c;
-    char recv_msgs[10];
-    while (Ser->available())
+  unsigned int checksum;
+  //uint8_t tmp;
+  char c;
+  char recv_msgs[10];
+  while (Ser->available())
+  {
+    c = Ser->read();
+    if (c == '\n')
     {
-        c = Ser->read();
-        if (c == '\n')
+      if (recv_num == 10)
+      {
+        checksum = 0;
+
+        for (int i = 0; i < 9; i++)
         {
-
-            if (recv_num == 10)
-            {
-                checksum = 0;
-
-                for (int i = 0; i < 9; i++)
-                {
-                    recv_msgs[i] = recv_msgs[i] - 0x20;
-                    checksum += (unsigned int)recv_msgs[i];
-                }
-
-                if ((checksum & 0x3F) == (recv_msgs[9] - 0x20))
-                {
-                    digitalWrite(PinName, !digitalRead(PinName));
-                    ButtonState = 0;//, LJoyX = 0, LJoyY = 0, RJoyX = 0, RJoyY = 0;
-
-                    ButtonState |= recv_msgs[0] & 0x3F;
-                    ButtonState |= (recv_msgs[1] & 0x3F) << 6;
-                    ButtonState |= (recv_msgs[2] & 0x0F) << 12;
-
-                    LJoyX = recv_msgs[3];
-                    LJoyX |= (recv_msgs[4] & 0x03) << 6;
-
-                    LJoyY = (recv_msgs[4] & 0x3C) >> 2;
-                    LJoyY |= (recv_msgs[5] & 0x0F) << 4;
-
-                    RJoyX = (recv_msgs[5] & 0x30) >> 4;
-                    RJoyX |= (recv_msgs[6] & 0x3F) << 2;
-
-                    RJoyY = recv_msgs[7];
-                    RJoyY |= (recv_msgs[8] & 0x03) << 6;
-
-                    preButtonState = ButtonState;
-                }
-            }
-            recv_num = 0;
+          recv_msgs[i] = recv_msgs[i] - 0x20;
+          checksum += (unsigned int)recv_msgs[i];
         }
-        else
+
+        if ((checksum & 0x3F) == (recv_msgs[9] - 0x20))
         {
-            recv_msgs[recv_num++] = c;
+          digitalWrite(PinName, !digitalRead(PinName));
+
+          preButtonState = ButtonState;
+          ButtonState = 0;//, LJoyX = 0, LJoyY = 0, RJoyX = 0, RJoyY = 0;
+
+          ButtonState |= recv_msgs[0] & 0x3F;
+          ButtonState |= (recv_msgs[1] & 0x3F) << 6;
+          ButtonState |= (recv_msgs[2] & 0x0F) << 12;
+
+          LJoyX = recv_msgs[3];
+          LJoyX |= (recv_msgs[4] & 0x03) << 6;
+
+          LJoyY = (recv_msgs[4] & 0x3C) >> 2;
+          LJoyY |= (recv_msgs[5] & 0x0F) << 4;
+
+          RJoyX = (recv_msgs[5] & 0x30) >> 4;
+          RJoyX |= (recv_msgs[6] & 0x3F) << 2;
+
+          RJoyY = recv_msgs[7];
+          RJoyY |= (recv_msgs[8] & 0x03) << 6;
         }
+      }
+      recv_num = 0;
     }
+    else
+    {
+      recv_msgs[recv_num++] = c;
+    }
+  }
 }
 
-void Controller::update_api(byte PinName){
+void Controller::update_api(byte PinName)
+{
     
   xbee.readPacket();
 
-  if (xbee.getResponse().isAvailable()) {
+  if (xbee.getResponse().isAvailable())
+  {
     // got something
-    
     digitalWrite(PinName,HIGH);
-    if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
+    if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE)
+    {
       // got a zb rx packet
       // now fill our zb rx class
       xbee.getResponse().getZBRxResponse(rx);
@@ -98,69 +99,71 @@ void Controller::update_api(byte PinName){
       for(int i = 0; i < 9; i++){
         recive_num[i] = rx.getData(i);
       }
-        ButtonState = 0;          
-        ButtonState |= recive_num[0] & 0x3F;
-        ButtonState |= (recive_num[1] & 0x3F) << 6;
-        ButtonState |= (recive_num[2] & 0x0F) << 12;
+      preButtonState = ButtonState;
+      ButtonState = 0;          
+      ButtonState |= recive_num[0] & 0x3F;
+      ButtonState |= (recive_num[1] & 0x3F) << 6;
+      ButtonState |= (recive_num[2] & 0x0F) << 12;
 
-        LJoyX = recive_num[3];
-        LJoyX |= (recive_num[4] & 0x03) << 6;
+      LJoyX = recive_num[3];
+      LJoyX |= (recive_num[4] & 0x03) << 6;
 
-        LJoyY = (recive_num[4] & 0x3C) >> 2;
-        LJoyY |= (recive_num[5] & 0x0F) << 4;
+      LJoyY = (recive_num[4] & 0x3C) >> 2;
+      LJoyY |= (recive_num[5] & 0x0F) << 4;
 
-        RJoyX = (recive_num[5] & 0x30) >> 4;
-        RJoyX |= (recive_num[6] & 0x3F) << 2;
+      RJoyX = (recive_num[5] & 0x30) >> 4;
+      RJoyX |= (recive_num[6] & 0x3F) << 2;
 
-        RJoyY = recive_num[7];
-        RJoyY |= (recive_num[8] & 0x03) << 6;
-
-        preButtonState = ButtonState;
+      RJoyY = recive_num[7];
+      RJoyY |= (recive_num[8] & 0x03) << 6;
     }
-    
   }
-  else{
+  else
+  {
     digitalWrite(PinName,LOW); 
   } 
 }
 
-void Controller::update_api_DR(byte PinName){
+void Controller::update_api_DR(byte PinName)
+{
     
   xbee.readPacket();
 
-  if (xbee.getResponse().isAvailable()) {
+  if (xbee.getResponse().isAvailable())
+  {
     // got something
-    
     digitalWrite(PinName,HIGH);
-    if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
+    if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE)
+    {
       // got a zb rx packet
       // now fill our zb rx class
       xbee.getResponse().getZBRxResponse(rx);
         static int recive_num_DR[5] = {};
-      for(int i = 0; i < 5; i++){
+      for(int i = 0; i < 5; i++)
+      {
         recive_num_DR[i] = rx.getData(i);
       }
-        ButtonState = recive_num_DR[0] & 0xFF;
+      ButtonState = recive_num_DR[0] & 0xFF;
 
-        LJoyX = recive_num_DR[1] & 0xFF;
-        LJoyY = recive_num_DR[2] & 0xFF;
-        RJoyX = recive_num_DR[3] & 0xFF;
-        RJoyY = recive_num_DR[4] & 0xFF;
-
-        preButtonState = ButtonState;
+      LJoyX = recive_num_DR[1] & 0xFF;
+      LJoyY = recive_num_DR[2] & 0xFF;
+      RJoyX = recive_num_DR[3] & 0xFF;
+      RJoyY = recive_num_DR[4] & 0xFF;
     }
-    
   }
-  else{
+  else
+  {
     digitalWrite(PinName,LOW); 
   } 
 }
  
-int8_t Controller::readButton(unsigned int button)
+bool Controller::readButton(unsigned int button,int status)
 {
-  if((ButtonState & button) && (~preButtonState & button)) return PUSHED;
-  else if((~ButtonState & button) && (preButtonState & button)) return RELEASED;
-  else return 0;
+  int8_t num = 0;
+  if(ButtonState & button)  num += 2;
+  if(preButtonState & button) num -= 1;
+  if(num == status) return true;
+  else return false;
 }
 
 unsigned int Controller::getButtonState() const

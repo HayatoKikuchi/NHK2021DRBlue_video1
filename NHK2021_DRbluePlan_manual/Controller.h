@@ -11,20 +11,20 @@
 
 #if XBEE_MODE == TRANSPARENT_MODE   
 
-    #define BUTTON_SIKAKU 0x01
-    #define BUTTON_SANKAKU 0x02
-    #define BUTTON_BATU 0x04
-    #define BUTTON_MARU 0x08
+    #define BUTTON_SIKAKU 0x0001
+    #define BUTTON_SANKAKU 0x0002
+    #define BUTTON_BATU 0x0004
+    #define BUTTON_MARU 0x0008
 
-    #define BUTTON_L1 0x10
-    #define BUTTON_R1 0x20
-    #define BUTTON_L2 0x40
-    #define BUTTON_R2 0x80
+    #define BUTTON_L1 0x0010
+    #define BUTTON_R1 0x0020
+    #define BUTTON_L2 0x0040
+    #define BUTTON_R2 0x0080
 
     #define BUTTON_PAD 0x0100
     #define BUTTON_PS 0x0200
-    // #define BUTTON_SHARE 0x400
-    // #define BUTTON_OPTION 0x800
+    // #define BUTTON_SHARE 0x0400
+    // #define BUTTON_OPTION 0x0800
     #define BUTTON_L3 0x0400
     #define BUTTON_R3 0x0800
 
@@ -44,8 +44,10 @@
 
 #endif
 
-#define PUSHED 1
-#define RELEASED 2
+#define PUSHE 1
+#define RELEASE 0
+#define PUSHED 2
+#define RELEASED -1
 
 class Controller
 {
@@ -59,7 +61,7 @@ public:
     void update_api(byte PinName);
     void update_api_DR(byte PinName);
 
-    int8_t readButton(unsigned int button);
+    bool readButton(unsigned int button,int status);
 
     unsigned int getButtonState() const;
     unsigned int getpreButtonState() const;
