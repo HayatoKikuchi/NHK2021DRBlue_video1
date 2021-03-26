@@ -86,17 +86,17 @@ struct coords_4{
     // 4輪メカナム関連
     #define RES_MECHANUM			( 1024.0 ) // 1024pulses
     #define RES_WALL                ( 1024.0 ) // 1024pulses
-    #define MECANUM_HANKEI		( 0.127 ) // 駆動輪の半径
+    #define MECANUM_HANKEI		( 0.127 / 2.0 ) // 駆動輪の半径
     #define MECHANUM_A	( 0.573/2.0 ) // 外側のホイール a[m]
     #define MECHANUM_B	( 0.540/2.0 ) // 外側のホイール b[m]
-    #define _4RES_2PI_WHEEL ( 4 * RES_MECHANUM / ( 2.0*PI_ ) ) // 駆動輪の角速度[rad/s]からRoboClawの指令値[pulses/s]に変換するための定数(3ppr)
-    #define _4RES_2PI_WALL ( 4 * RES_WALL / ( 2.0*PI_ ) ) // 壁越え機構の角速度[rad/s]からRoboClawの指令値[pulses/s]に変換するための定数(3ppr)
+    #define _4RES_2PI_WHEEL ( 4 * RES_MECHANUM / ( 2.0*PI_ ) ) // 駆動輪の角速度[rad/s]からRoboClawの指令値[pulses/s]に変換するための定数(1024ppr)
+    #define _4RES_2PI_WALL ( 4 * RES_WALL / ( 2.0*PI_ ) ) // 壁越え機構の角速度[rad/s]からRoboClawの指令値[pulses/s]に変換するための定数(1024ppr)
     #define GEARRATIO_WHEEL ( 1.0 ) // 駆動輪のギヤ比
     #define GEARRATIO_WALL ( 3.0 )// 壁越え機構ギヤ比
     #define MAXVEL ( 1.0 )
     #define MAXOMEGA ( PI_ )
     #define KAKUKASOKUDO_WALL ( 471.2389 ) //壁越えモータの角加速度rad/ss
-    #define DISTANCE_WALL ( 0.152 )  //壁越えに必要な距離
+    #define DISTANCE_WALL ( 0.127 + 0.05 )  //壁越えに必要な距離[m]
 #elif DRIVE_MODE == DRIVE_DUALWHEEL
     // 双輪キャスター関連
     #define PIN_CSB     ( 10 )    // turntableのPIN(CSB)
