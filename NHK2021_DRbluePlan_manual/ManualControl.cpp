@@ -68,21 +68,48 @@ coords ManualControl::getGlobalVel(unsigned int JoyX, unsigned int JoyY, unsigne
   return refV;
 }
 
-double ManualControl::calcu_posiPID(double conZ, double roboAngle)
+double ManualControl::updatePosiPID(double conZ_or_position,double maxomega, double roboAngle, int mode)
 {
-  static double refAngle = 0.0;
-  refAngle += conZ * 0.01;
-  posiZ_cmd = pid->getCmd(refAngle,roboAngle,MAXOMEGA);
-  refAngle = roboAngle;
-  return refAngle;
+  switch (mode)
+  {
+  case JOYCONMODE:
+    posiZ_cmd = conZ_or_position;
+    break;
+  
+  case JOYCONPID:
+    static double refAngle = 0.0;
+    refAngle += conZ_or_position * 0.01;
+    posiZ_cmd = pid->getCmd(refAngle,roboAngle,maxomega);
+    break;
+  
+  case POSITIONPID:
+    posiZ_cmd = pid->getCmd(conZ_or_position,roboAngle,maxomega);
+    break;
+
+  default:
+    break;
+  }
+  return posiZ_cmd;
 }
 
-coords ManualControl::getLocalVel(double vel_x, double vel_y, double vel_z, double roboAngle,bool mode){
+coords ManualControl::getLocalVel(double vel_x, double vel_y, double vel_z, double roboAngle,int mode){
   coords refVel;
   refVel.x = +vel_x*cos(roboAngle) + vel_y*sin(roboAngle);
   refVel.y = -vel_x*sin(roboAngle) + vel_y*cos(roboAngle);
-  if(mode) refVel.z = posiZ_cmd;
-  else refVel.z = vel_z;
+  switch (mode)
+  {
+  case JOYCONMODE:
+    refVel.z = vel_z;
+    break;
+  case JOYCONPID:
+    refVel.z = posiZ_cmd;
+    break;
+  case POSITIONPID:
+    refVel.z = posiZ_cmd;
+    break;
+  default:
+    break;
+  }
 
   return refVel;
 }
@@ -130,10 +157,18 @@ coords_4 ManualControl::getCmd(double refVx, double refVy, double refVz){
   refOmega.iv  = (refVx + refVy + refVz * (MECHANUM_A + MECHANUM_B)) / MECANUM_HANKEI * GEARRATIO_WHEEL;
 
   coords_4 VelCmd;
-  VelCmd.i   = refOmega.i * _4RES_2PI_WHEEL;
-  VelCmd.ii  = refOmega.ii * _4RES_2PI_WHEEL;
+  VelCmd.i   = refOmega.i   * _4RES_2PI_WHEEL;
+  VelCmd.ii  = refOmega.ii  * _4RES_2PI_WHEEL;
   VelCmd.iii = refOmega.iii * _4RES_2PI_WHEEL;
-  VelCmd.iv  = refOmega.iv * _4RES_2PI_WHEEL;
+  VelCmd.iv  = refOmega.iv  * _4RES_2PI_WHEEL;
 
   return VelCmd;
 }
+/*
+coords_4 ManualControl::getMechanumWheelAccel(double accel_x, double accel_y, double accel_z,double robotAngle,double mode,double robotAccel)
+{
+  coords GlobalAccel = getGlobalVel(accel_x,accel_y,accel_z); //速度の変換関数を加速度の変換に使用
+  coords LocalAccel = getLocalVel(GlobalAccel.x,GlobalAccel.y,GlobalAccel.z,robotAngle,mode); //速度の変換関数を加速度の変換に使用
+  coords_4 WheelAccel = getCmd(LocalAccel.x,LocalAccel.y,LocalAccel.z); //速度の変換関数を加速度の変換に使用
+  return WheelAccel;
+}*/

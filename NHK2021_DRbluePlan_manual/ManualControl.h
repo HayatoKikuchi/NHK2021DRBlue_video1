@@ -14,6 +14,10 @@
 #define JOY_MAXVEL      ( 1.0 )
 #define JOY_MAXANGVEL   ( PI_ / 2.0 )
 
+#define JOYCONMODE  1
+#define JOYCONPID   2
+#define POSITIONPID 3
+
 class ManualControl{
 public:
     /*********** 変数宣言 ***********/
@@ -25,18 +29,20 @@ public:
     ManualControl(PID *_pid);
     
     coords getGlobalVel(unsigned int JoyX, unsigned int JoyY, unsigned int JoyZ);
-    coords getLocalVel(double refVx, double refVy, double refVz, double roboAngle,bool mode);
+    coords getLocalVel(double refVx, double refVy, double refVz, double roboAngle,int mode);
     coords getVel_max(double vel_x, double vel_y, double vel_z);
     coords_4 getCmd(double refVx, double refVy, double refVz);
-    double calcu_posiPID(double conZ, double roboAngle); // タイマー割込みで使用
+    double updatePosiPID(double conZ_or_position,double maxomega, double roboAngle, int mode); // タイマー割込みで使用
+    //coords_4 getMechanumWheelAccel(double vel_x, double vel_y, double vel_z,double robotAngle,double mode,double robotAccel);
 
     double robot_vel_x;
     double robot_vel_y;
     double robot_vel;
-    double posiZ_cmd;
 
 private:
     PID *pid;
+
+    double posiZ_cmd;
 
     int path_num;
     int mode;
