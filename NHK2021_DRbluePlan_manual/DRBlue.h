@@ -61,6 +61,7 @@ public:
 
     void wall_time_count(double int_time); //壁越えに関する時間を計算
     void roboclawSpeedM1(double vel); //足回りの速度指定
+    void roboclawSpeedAccelM1(double accel, double speed); //足回りの角速度指定
     void roboclaw_begin(int baudlate);
     void roboclawResetEncoders();
     bool send_wall_position(double refAngle, double refOmega); //壁越え機構の動作確認に使用

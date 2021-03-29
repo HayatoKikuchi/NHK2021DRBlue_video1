@@ -238,3 +238,7 @@ void DRwall::roboclaw_begin(int baudlate){
 void DRwall::roboclawResetEncoders(){
   roboclaw->ResetEncoders(adress);
 }
+void DRwall::roboclawSpeedAccelM1(double accel, double speed)
+{
+  roboclaw->SpeedAccelM1(adress, (int)accel, (int)speed);
+}
