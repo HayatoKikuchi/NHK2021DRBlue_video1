@@ -14,14 +14,16 @@
 #include "DRBlue.h"
 #include "Button_Encorder.h"
 #include "LCDclass.h"
+#include "Filter.h"
 
 lpms_me1 lpms(&SERIAL_LPMSME1);
 phaseCounter encX(1);
 phaseCounter encY(2);
 DRBlue DR(&lpms, &encX, &encY); //DRのセットアップなどを行う
 
-PID posiZ_pid(4.0, 0.0, 1.0,INT_TIME);
+PID posiZ_pid(2.5, 0.0, 1.0,INT_TIME);
 ManualControl ManualCon(&posiZ_pid); //メカナムの速度制御
+
 Controller Con(&SERIAL_XBEE); //dualshock4
 myLCDclass lcd(&SERIAL_LCD);
 
@@ -131,7 +133,7 @@ void radianPID_setup(bool flag)
   { 
     lcd.clear_display();
     lcd.write_str("RadianPID Setting",LINE_1,1);
-    lcd.write_str("CMD ",LINE_4,1);
+    lcd.write_str("deg ",LINE_4,1);
     flag_lcd = false;
   }
 
@@ -210,9 +212,9 @@ double min_max(double value, double minmax)
 void timer_warikomi()
 {
   DR.RGB_led(2);
-  //DR.calcu_robotPosition();
-  DR.calcu_roboAngle(); // calcu_robotPosition関数を使用する場合は不要
-  serial_num = ManualCon.updatePosiPID(globalVelZ,MAXOMEGA,DR.roboAngle,JOYCONPID);
+  //DR.updateRobotPosition();
+  DR.updateRoboAngle(); // updateRobotPosition関数を使用する場合は不要
+  ManualCon.updatePosiPID(globalVelZ,MAXOMEGA,DR.roboAngle,JOYCONPID);
 
   wall_1.wall_time_count(INT_TIME); // 壁越えの時間に関する処理
   wall_2.wall_time_count(INT_TIME); // ↓
@@ -266,13 +268,14 @@ void setup()
   {
     Con.update(PIN_LED_USER);
     //roboclawの原点出し
-    if(Con.readButton(BUTTON_PS,PUSHE) || !digitalRead(PIN_SW))
+    if(Con.readButton(BUTTON_PS,PUSHED) || !digitalRead(PIN_SW))
     {  
       roboclawL.ResetEncoders(ADR_MD_WHEE_1);
       roboclawL.ResetEncoders(ADR_MD_WHEE_2);
       roboclawR.ResetEncoders(ADR_MD_WHEE_3);
       roboclawR.ResetEncoders(ADR_MD_WHEE_4);
       posiZ_pid.PIDinit(0.0,0.0);
+      DR.setPosition(0.0,0.0,0.0);
       DR.LEDblink(PIN_LED_GREEN, 2, 100);
       lcd.clear_display();
       lcd.write_str("push triangle",LINE_3,1);
@@ -330,10 +333,6 @@ void loop()
   //roboclawの原点出し
   if(Con.readButton(BUTTON_PS,PUSHED))
   {  
-    roboclawL.ResetEncoders(ADR_MD_WHEE_1);
-    roboclawL.ResetEncoders(ADR_MD_WHEE_2);
-    roboclawR.ResetEncoders(ADR_MD_WHEE_3);
-    roboclawR.ResetEncoders(ADR_MD_WHEE_4);
     rear_position_num = 1;
     front_position_num = 1;
   }
@@ -342,6 +341,7 @@ void loop()
   if( flag_10ms )
   {
     if(turning_mode == 2 ) radianPID_setup(false); // pidのゲインを設定
+    else radianPID_setup(true);
 
     //expand_right.expand_func(Con.readButton(BUTTON_R1),expand_mode); //展開右
     //expand_left.expand_func(Con.readButton(BUTTON_L1),expand_mode);  //展開左
@@ -362,7 +362,7 @@ void loop()
     }
     if(Con.readButton(BUTTON_L2,PUSHED))
     {
-      if(0.5 < Cx) //上限は0.5倍(0.5m/s)
+      if(0.5 < Cx) //下限は0.5倍(0.5m/s)
       {
         Cx -= 0.5;
         Cy -= 0.5;
@@ -370,12 +370,20 @@ void loop()
       lcd.clear_display();
       lcd.write_double(Cy,LINE_3,3);
     }
+    static double robotRefDeg = 0.0;
+    if(Con.readButton(BUTTON_SIKAKU,PUSHED))
+    {
+      robotRefDeg += 90.0;
+      ManualCon.setRefAngle(robotRefDeg);
+    }
+    if(Con.readButton(BUTTON_MARU,PUSHED))
+    {
+      robotRefDeg -= 90.0;
+      ManualCon.setRefAngle(robotRefDeg);
+    }
     
     coords gloabalVel = ManualCon.getGlobalVel(Con.LJoyX,Con.LJoyY,Con.RJoyY);
     globalVelZ = gloabalVel.z;
-    bool turningMode;
-    if(turning_mode == 1) turningMode = true;
-    else turningMode = true;
     coords localVel = ManualCon.getLocalVel(Cx*gloabalVel.x, Cy*gloabalVel.y, Cz*gloabalVel.z, DR.roboAngle, JOYCONPID);
     // coords refV = ManualCon.getVel_max(localVel.x, localVel.y, localVel.z);
     // coords VelCmd = ManualCon.getCmd(refV.x,refV.y,refV.z);
@@ -397,12 +405,9 @@ void loop()
     // Serial.println(digitalRead(PIN_SW_RIGHT));
     //Serial.print("\t");
     //Serial.println(digitalRead(PIN_SW_LEFT));
-    
-    double robot_x_vel = 1.0; //ロボットのx方向の移動速度, 1.0は積の単位元
-    robot_x_vel *= Cx;
 
-    static double wall_rad_F = 0.0; //壁越え機構の回転角
-    static double wall_rad_R = 0.0; //壁越え機構の回転角
+    static double wall_rad_F = 0.0; //壁越え機構の回転角(front wheel)
+    static double wall_rad_R = 0.0; //壁越え機構の回転角(rear wheel)
     static double refOmega_wall = 180.0; //壁越え機構の角速度[deg/s]
     switch (wall_mode)
     {
@@ -435,14 +440,14 @@ void loop()
       {
         front_position_num = 2; // 90[deg]
         double refSeconds_wall; // 壁越えに必要な時間
-        refSeconds_wall = DISTANCE_WALL / robot_x_vel;
+        refSeconds_wall = DISTANCE_WALL / (ManualCon.robot_vel_x*Cx);
         refOmega_wall = 180.0 / refSeconds_wall;
       }
       if(Con.readButton(BUTTON_L1,PUSHE))
       {
         rear_position_num = 2; // 90[deg]
         double refSeconds_wall; // 壁越えに必要な時間
-        refSeconds_wall = DISTANCE_WALL / robot_x_vel;
+        refSeconds_wall = DISTANCE_WALL / (ManualCon.robot_vel_x*Cx);
         refOmega_wall = 180.0 / refSeconds_wall;
       }
 
@@ -473,6 +478,20 @@ void loop()
     wall_2.send_wall_position(wall_rad_R, refOmega_wall);
     wall_3.send_wall_position(wall_rad_R, refOmega_wall);
     wall_4.send_wall_position(wall_rad_F, refOmega_wall);
+
+    // Serial.print(DR.roboAngle);
+    // Serial.print("\t");
+    // Serial.print(robotRefDeg);
+    // Serial.print("\t");
+    // Serial.print(ManualCon.serial_vel_x);
+    // Serial.print("\t");
+    // Serial.println(ManualCon.serial_vel_x_raw);
+    // Serial.print(Con.LJoyX);
+    // Serial.print("\t");
+    // Serial.print(Con.LJoyY);
+    // Serial.print("\t");
+    // Serial.println(Con.RJoyY);
+    // Serial.println(serial_num,10);
 
     flag_10ms = false;
   }
