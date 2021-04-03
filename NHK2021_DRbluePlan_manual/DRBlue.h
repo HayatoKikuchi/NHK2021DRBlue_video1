@@ -25,8 +25,9 @@ public:
 
     /*********** 関数宣言 ***********/
     DRBlue(lpms_me1 *_lpms, phaseCounter *_enc1, phaseCounter *_enc2);
-    void calcu_robotPosition(void); //自己推定を行う
-    void calcu_roboAngle(void); //ロボットの姿勢(角度)のみ取得
+    void updateRobotPosition(void); //自己推定を行う
+    void updateRoboAngle(void); //ロボットの姿勢(角度)のみ取得
+    void setPosition(double x, double y, double z); //自己位置の初期化
     void BasicSetup(void); //汎用基板の基本的なセットアップを行う
     void DRsetup(void); //DRに関するセットアップを行う
     void allOutputLow(void); //全てのデジタル出力をLOWにする
@@ -42,6 +43,8 @@ private:
     double encY_rad , encY , pre_encY;
     double x_axis_prime, y_axis_prime;
     double angle_rad;
+    double anlge_ofset;
+    double setAngleNum;
 };
 
 class DRexpand{
@@ -65,7 +68,7 @@ public:
     void roboclaw_begin(int baudlate);
     void roboclawResetEncoders();
     bool send_wall_position(double refAngle, double refOmega); //壁越え機構の動作確認に使用
-    bool send_wall_cmd(double refAngle,double robot_x_vel); //壁越えのコマンドを送信
+    bool send_wall_cmd(double robot_x_vel); //壁越えのコマンドを送信
     void init(void); // 初期化
         
     int position; //壁越えモータの回転角度[pulse]
