@@ -10,7 +10,7 @@
 #include "define.h"
 #include "PIDclass.h"
 
-#define JOY_DEADBAND    ( 5 )
+#define JOY_DEADBAND    ( 20 )
 #define JOY_MAXVEL      ( 1.0 )
 #define JOY_MAXANGVEL   ( PI_ / 2.0 )
 
@@ -33,6 +33,7 @@ public:
     coords getVel_max(double vel_x, double vel_y, double vel_z);
     coords_4 getCmd(double refVx, double refVy, double refVz);
     double updatePosiPID(double conZ_or_position,double maxomega, double roboAngle, int mode); // タイマー割込みで使用
+    void setRefAngle(double angle); //目標角度を設定，angle[deg]
     //coords_4 getMechanumWheelAccel(double vel_x, double vel_y, double vel_z,double robotAngle,double mode,double robotAccel);
 
     double robot_vel_x;
@@ -43,6 +44,7 @@ private:
     PID *pid;
 
     double posiZ_cmd;
+    double refAngle;
 
     int path_num;
     int mode;

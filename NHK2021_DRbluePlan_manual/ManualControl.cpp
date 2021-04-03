@@ -11,14 +11,12 @@ Filter velX_filter(INT_TIME);
 Filter velY_filter(INT_TIME);
 Filter velZ_filter(INT_TIME);
 
-PID pid_posiZ(0.0,0.0,0.0,INT_TIME);
-
 ManualControl::ManualControl(PID *_pid){
   pid = _pid;
   posiZ_cmd = 0.0;
-  velX_filter.setLowPassPara(0.05, 0.0);//Tと初期値を設定
-  velY_filter.setLowPassPara(0.05, 0.0);//Tと初期値を設定
-  velZ_filter.setLowPassPara(0.05, 0.0);//Tと初期値を設定
+  velX_filter.setLowPassPara(0.10, 0.0);//Tと初期値を設定
+  velY_filter.setLowPassPara(0.10, 0.0);//Tと初期値を設定
+  velZ_filter.setLowPassPara(0.10, 0.0);//Tと初期値を設定
 }
 
 coords ManualControl::getGlobalVel(unsigned int JoyX, unsigned int JoyY, unsigned int JoyZ){
@@ -64,6 +62,10 @@ coords ManualControl::getGlobalVel(unsigned int JoyX, unsigned int JoyY, unsigne
     rawV.z = 0.0;
   }
   refV.z = velZ_filter.LowPassFilter(rawV.z);
+  //refV.z = rawV.z;
+
+  robot_vel_x = refV.x;
+  robot_vel_y = refV.y;
 
   return refV;
 }
@@ -77,19 +79,23 @@ double ManualControl::updatePosiPID(double conZ_or_position,double maxomega, dou
     break;
   
   case JOYCONPID:
-    static double refAngle = 0.0;
     refAngle += conZ_or_position * 0.01;
     posiZ_cmd = pid->getCmd(refAngle,roboAngle,maxomega);
     break;
   
   case POSITIONPID:
-    posiZ_cmd = pid->getCmd(conZ_or_position,roboAngle,maxomega);
+    posiZ_cmd = pid->getCmd(refAngle,roboAngle,maxomega);
     break;
 
   default:
     break;
   }
-  return posiZ_cmd;
+  return refAngle;
+}
+
+void ManualControl::setRefAngle(double angle)
+{
+  refAngle = angle / 360.0 * 2.0 * PI_ ;
 }
 
 coords ManualControl::getLocalVel(double vel_x, double vel_y, double vel_z, double roboAngle,int mode){
@@ -130,9 +136,9 @@ coords ManualControl::getVel_max(double vel_x, double vel_y, double vel_z){
   }
   refV.z = vel_z;
 
-  robot_vel_x = refV.x;
-  robot_vel_y = refV.y;
-  robot_vel   = sqrt(refV.x*refV.x + refV.y*refV.y);
+  // robot_vel_x = refV.x;
+  // robot_vel_y = refV.y;
+  // robot_vel   = sqrt(refV.x*refV.x + refV.y*refV.y);
 
   return refV;
 }
