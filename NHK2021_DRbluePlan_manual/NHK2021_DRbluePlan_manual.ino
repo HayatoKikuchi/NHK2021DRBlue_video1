@@ -116,13 +116,13 @@ void dipSetup()
   }
 }
 
-double serial_num;
 void radianPID_setup(bool flag)
 {
   static int pid_setting_mode = 1;
   static double Kp = 0.0, Ki = 0.0, Kd = 0.0;
   static bool init_kp = true, init_ki = true, init_kd = true;
   static bool flag_lcd = true;
+  double serial_num;
 
   if(button_UP)   pid_setting_mode++;
   else if(button_DOWN) pid_setting_mode--;
@@ -133,7 +133,6 @@ void radianPID_setup(bool flag)
   { 
     lcd.clear_display();
     lcd.write_str("RadianPID Setting",LINE_1,1);
-    lcd.write_str("deg ",LINE_4,1);
     flag_lcd = false;
   }
 
@@ -193,12 +192,22 @@ void radianPID_setup(bool flag)
   default:
     break;
   }
+  /*
   if(flag_100ms && flag)
   {
     lcd.write_str("        ",LINE_4,7);
     lcd.write_double(serial_num,LINE_4,7);
   }
+  */
   posiZ_pid.setPara(Kp,Ki,Kd);
+}
+
+void SendAllWheelPosition(double deg, double refOmega)
+{
+  wall_1.send_wall_position(deg, refOmega);
+  wall_2.send_wall_position(deg, refOmega);
+  wall_3.send_wall_position(deg, refOmega);
+  wall_4.send_wall_position(deg, refOmega);
 }
 
 // 最大最小範囲に収まるようにする関数
@@ -328,24 +337,17 @@ void loop()
     wall_4.init();
   }
 
-  static int front_position_num = 1;
-  static int rear_position_num = 1;
-  //roboclawの原点出し
-  if(Con.readButton(BUTTON_PS,PUSHED))
-  {  
-    rear_position_num = 1;
-    front_position_num = 1;
-  }
-  
   //**10msの処理**//
   if( flag_10ms )
   {
+    //旋回に関する設定//
     if(turning_mode == 2 ) radianPID_setup(false); // pidのゲインを設定
     else radianPID_setup(true);
 
-    //expand_right.expand_func(Con.readButton(BUTTON_R1),expand_mode); //展開右
-    //expand_left.expand_func(Con.readButton(BUTTON_L1),expand_mode);  //展開左
-  
+    //展開に関する処理//
+    //expand_right.expand_func(Con.readButton(BUTTON_R1,PUSHED),expand_mode); //展開右
+    //expand_left.expand_func(Con.readButton(BUTTON_L1,PUSHED),expand_mode);  //展開左
+
     static double Cx = 1.0;
     static double Cy = 1.0;
     static double Cz = 1.0; //速度の倍数
@@ -394,104 +396,23 @@ void loop()
     wall_3.roboclawSpeedM1(VelCmd.iii); // ↓
     wall_4.roboclawSpeedM1(VelCmd.iv);  // ↓
 
-    // Serial.print(digitalRead(PIN_SW_WALL_1));
-    // Serial.print("\t");
-    // Serial.print(digitalRead(PIN_SW_WALL_2));
-    // Serial.print("\t");
-    // Serial.print(digitalRead(PIN_SW_WALL_3));
-    // Serial.print("\t");
-    // Serial.print(digitalRead(PIN_SW_WALL_4));
-    // Serial.print("\t");
-    // Serial.println(digitalRead(PIN_SW_RIGHT));
-    //Serial.print("\t");
-    //Serial.println(digitalRead(PIN_SW_LEFT));
-
-    static double wall_rad_F = 0.0; //壁越え機構の回転角(front wheel)
-    static double wall_rad_R = 0.0; //壁越え機構の回転角(rear wheel)
-    static double refOmega_wall = 180.0; //壁越え機構の角速度[deg/s]
     switch (wall_mode)
     {
     case 1:
-      if(Con.readButton(BUTTON_RIGHT,PUSHE)) //倒立状態
-      {
-        rear_position_num = 0;
-        front_position_num = 0;
-        refOmega_wall = 180.0; // deg/s
-      }
-      if(Con.readButton(BUTTON_UP,PUSHE)) //初期状態（8輪接地）
-      {
-        rear_position_num = 1;
-        front_position_num = 1;
-        refOmega_wall = 180.0; // deg/s
-      } 
-      if(Con.readButton(BUTTON_LEFT,PUSHE)) //壁越え後の倒立状態
-      {
-        rear_position_num = 2;
-        front_position_num = 2;
-        refOmega_wall = 180.0; // deg/s
-      }
-      if(Con.readButton(BUTTON_DOWN,PUSHE)) //壁越え後の8輪接地
-      {
-        rear_position_num = 3;
-        front_position_num = 3;
-        refOmega_wall = 180.0; // deg/s
-      }
-      if(Con.readButton(BUTTON_R1,PUSHE))
-      {
-        front_position_num = 2; // 90[deg]
-        double refSeconds_wall; // 壁越えに必要な時間
-        refSeconds_wall = DISTANCE_WALL / (ManualCon.robot_vel_x*Cx);
-        refOmega_wall = 180.0 / refSeconds_wall;
-      }
-      if(Con.readButton(BUTTON_L1,PUSHE))
-      {
-        rear_position_num = 2; // 90[deg]
-        double refSeconds_wall; // 壁越えに必要な時間
-        refSeconds_wall = DISTANCE_WALL / (ManualCon.robot_vel_x*Cx);
-        refOmega_wall = 180.0 / refSeconds_wall;
-      }
+      if(Con.readButton(BUTTON_RIGHT,PUSHED)) SendAllWheelPosition(-90.0,180.0);  //倒立状態
+      if(Con.readButton(BUTTON_UP,PUSHED))    SendAllWheelPosition(0.0,180.0);    //初期状態（8輪接地）
+      if(Con.readButton(BUTTON_LEFT,PUSHED))  SendAllWheelPosition(90.0,180.0);   //壁越え後の倒立状態
+      if(Con.readButton(BUTTON_DOWN,PUSHED))  SendAllWheelPosition(180.0,180.0);  //壁越え後の8輪接地
 
-      switch (front_position_num)
-      {
-      case 0: wall_rad_F = -90.0; break; //倒立状態
-      case 1: wall_rad_F = 0.0;   break; //初期状態（8輪接地）
-      case 2: wall_rad_F = 90.0;  break; //壁越え後の倒立状態
-      case 3: wall_rad_F = 180.0; break; //壁越え後の8輪接地
-      default:
-        break;
-      }
-    
-      switch (rear_position_num)
-      {
-      case 0: wall_rad_R = -90.0; break; //倒立状態
-      case 1: wall_rad_R = 0.0;   break; //初期状態（8輪接地）
-      case 2: wall_rad_R = 90.0;  break; //壁越え後の倒立状態
-      case 3: wall_rad_R = 180.0; break; //壁越え後の8輪接地
-      default:
-        break;
-      }
       break; // wall_mode == 1　のブレイク
+
       default:
        break;
     }
-    wall_1.send_wall_position(wall_rad_F, refOmega_wall);
-    wall_2.send_wall_position(wall_rad_R, refOmega_wall);
-    wall_3.send_wall_position(wall_rad_R, refOmega_wall);
-    wall_4.send_wall_position(wall_rad_F, refOmega_wall);
-
-    // Serial.print(DR.roboAngle);
-    // Serial.print("\t");
-    // Serial.print(robotRefDeg);
-    // Serial.print("\t");
-    // Serial.print(ManualCon.serial_vel_x);
-    // Serial.print("\t");
-    // Serial.println(ManualCon.serial_vel_x_raw);
-    // Serial.print(Con.LJoyX);
-    // Serial.print("\t");
-    // Serial.print(Con.LJoyY);
-    // Serial.print("\t");
-    // Serial.println(Con.RJoyY);
-    // Serial.println(serial_num,10);
+    wall_1.send_wall_cmd(Cx);
+    wall_2.send_wall_cmd(Cx);
+    wall_3.send_wall_cmd(Cx);
+    wall_4.send_wall_cmd(Cx);
 
     flag_10ms = false;
   }
