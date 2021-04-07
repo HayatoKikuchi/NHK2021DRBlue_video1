@@ -284,7 +284,6 @@ void setup()
       roboclawR.ResetEncoders(ADR_MD_WHEE_3);
       roboclawR.ResetEncoders(ADR_MD_WHEE_4);
       posiZ_pid.PIDinit(0.0,0.0);
-      DR.setPosition(0.0,0.0,0.0);
       DR.LEDblink(PIN_LED_GREEN, 2, 100);
       lcd.clear_display();
       lcd.write_str("push triangle",LINE_3,1);
@@ -306,6 +305,7 @@ void setup()
 
   MsTimer2::set(10,timer_warikomi); // 10ms period
   MsTimer2::start();
+  DR.setPosition(0.0,0.0,0.0);
 }
 
 void loop()
@@ -404,7 +404,7 @@ void loop()
       if(Con.readButton(BUTTON_LEFT,PUSHED))  SendAllWheelPosition(90.0,180.0);   //壁越え後の倒立状態
       if(Con.readButton(BUTTON_DOWN,PUSHED))  SendAllWheelPosition(180.0,180.0);  //壁越え後の8輪接地
 
-      break; // wall_mode == 1　のブレイク
+      break;
 
       default:
        break;
