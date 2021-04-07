@@ -211,22 +211,29 @@ bool DRwall::send_wall_position(double refAngle,double refOmega)
   position = convert_position(refAngle,RES_WALL,GEARRATIO_WALL);
   omega = convert_pps(refOmega,RES_WALL,GEARRATIO_WALL);
   accel = convert_ppss(KAKUKASOKUDO_WALL,RES_WALL,GEARRATIO_WALL);
-  accel = 70000.0;
+  accel = 100000.0;
   roboclaw->SpeedAccelDeccelPositionM2(adress,accel,omega,accel,position,true);
   return true;
 }
 
 bool DRwall::send_wall_cmd(double robot_x_vel)
-{
+{ 
+  bool send_cmd = false;
+  static bool flag_cmd = true;
   if(sw.get_button_state() == 1) phase_1 = true;
   if(phase_1)
   {
     wall_start = true;
     digitalWrite(pinSpt,LOW);
-    seconds = DISTANCE_WALL / robot_x_vel; // 180度回転するために必要な時間
+    seconds = DISTANCE_WALL / robot_x_vel; // 90度回転するために必要な時間
     if(true)//(wall_time > 0.5)
     {
-      DRwall::send_wall_position(90.0,180.0/seconds); // 90.0[deg]は倒立状態,180.0[deg]は回転角
+      if(flag_cmd)
+      {
+        DRwall::send_wall_position(90.0,90.0/seconds); // 90.0[deg]は倒立状態,180.0[deg]は回転角
+        flag_cmd = false;
+        send_cmd = true;
+      }
       double target_seconds;
       target_seconds = position / omega;
       if((target_seconds - wall_time) < 0.01)
@@ -234,10 +241,12 @@ bool DRwall::send_wall_cmd(double robot_x_vel)
         digitalWrite(pinSpt,HIGH);
         wall_start = false;
         phase_1 = false;
+        flag_cmd = true;
       }  
     }
   }
-  return true;
+  return send_cmd;
+  send_cmd = false;
 }
 
 void DRwall::init()
