@@ -50,12 +50,12 @@ struct coords_4{
 #define PIN_SUPPORT_WHEEL_3 50
 #define PIN_SUPPORT_WHEEL_4 51
 
-#define PIN_SW_WALL_1 2
-#define PIN_SW_WALL_2 3
+#define PIN_SW_WALL_1 43
+#define PIN_SW_WALL_2 53
 #define PIN_SW_WALL_3 4
 #define PIN_SW_WALL_4 5
-#define PIN_SW_EXPAND_RIGHT 43
-#define PIN_SW_EXPAMD_LEFT 53
+#define PIN_SW_EXPAND_RIGHT 3
+#define PIN_SW_EXPAMD_LEFT 2
 
 //#define SERIAL_LPC1768  Serial0
 #define SERIAL_LPMSME1  Serial1
@@ -96,7 +96,7 @@ struct coords_4{
     #define MAXVEL ( 1.0 )
     #define MAXOMEGA ( PI_ / 3.0 * 2.0 ) // 2/3π [rad/s]
     #define KAKUKASOKUDO_WALL ( 471.2389 ) //壁越えモータの角加速度rad/ss
-    #define DISTANCE_WALL ( 0.127 + 0.05 )  //壁越えに必要な距離[m]
+    #define DISTANCE_WALL ( 0.180 )  //壁越えに必要な距離[m](機構が90度回転する)
 #elif DRIVE_MODE == DRIVE_DUALWHEEL
     // 双輪キャスター関連
     #define PIN_CSB     ( 10 )    // turntableのPIN(CSB)
