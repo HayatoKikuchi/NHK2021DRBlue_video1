@@ -230,7 +230,7 @@ bool DRwall::send_wall_cmd(double robot_x_vel)
     {
       if(flag_cmd)
       {
-        DRwall::send_wall_position(90.0,90.0/seconds); // 90.0[deg]は倒立状態,180.0[deg]は回転角
+        DRwall::send_wall_position(90.0,270/seconds); // 90.0[deg]は倒立状態,180.0[deg]は回転角
         flag_cmd = false;
         send_cmd = true;
       }
