@@ -290,16 +290,21 @@ void setup()
       wall_init = true;
     }
 
-    if((Con.readButton(BUTTON_SANKAKU,PUSHE) || !digitalRead(PIN_SW)) && wall_init)
+    if((Con.readButton(BUTTON_PS,PUSHED) || !digitalRead(PIN_SW)) && wall_init)
     {
-      DR.LEDblink(PIN_LED_BLUE, 2, 100);
-      lcd.clear_display();
-      lcd.color_blue();
-      lcd.clear_display();
+      static bool once_loop = false; //BUTTON_PSのPUSHEDを一度見送る
+      if(once_loop)
+      {
+        DR.LEDblink(PIN_LED_BLUE, 2, 100);
+        lcd.clear_display();
+        lcd.color_blue();
+        lcd.clear_display();
 
-      lcd.write_str("  HELLOW WORLD   ",LINE_2,1);
-      delay(1000);
-      ready_to_start = true;
+        lcd.write_str("  HELLOW WORLD   ",LINE_2,1);
+        delay(1000);
+        ready_to_start = true;
+      }
+      once_loop = true;
     }
   }
 
@@ -413,6 +418,7 @@ void loop()
     wall_2.send_wall_cmd(Cx);
     wall_3.send_wall_cmd(Cx);
     wall_4.send_wall_cmd(Cx);
+    if(Con.readButton(BUTTON_SANKAKU,PUSHED)) SendAllWheelPosition(180.0,180.0); //壁越え後の8輪接地
 
     flag_10ms = false;
   }
